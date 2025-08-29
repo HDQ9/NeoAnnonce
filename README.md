@@ -1,1 +1,1 @@
-Create a subfolder called (html) to put index.html in it, and for the three Lua files, do not create a subfolder in the folder.
+To integrate it correctly, go to your resources - [FiveM] - [local] - and create a folder with the name neosupport or your name, and inside it, create a subfolder called “html.” Drag the index.html file into this folder. You do not need to create a subfolder for the three .lua files.  
