@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Annonce Cyberpunk</title>
     <style>
+        /* Importation de la police Orbitron depuis Google Fonts */
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
 
         body {
@@ -12,7 +13,7 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            font-family: 'Orbitron', sans-serif;
+            font-family: 'Orbitron', sans-serif; /* Police style cyberpunk */
         }
 
         #annonce-container {
@@ -22,19 +23,20 @@
             transform: translateX(-50%);
             width: 80%;
             max-width: 800px;
-            background-color: rgba(10, 25, 47, 0.85);
-            border: 2px solid #00ffff;
+            background-color: rgba(10, 25, 47, 0.85); /* Bleu nuit très sombre */
+            border: 2px solid #00ffff; /* Bordure cyan néon */
             box-shadow: 0 0 15px #00ffff, 0 0 25px #00ffff inset;
-            color: #e6f1ff;
+            color: #e6f1ff; /* Texte blanc cassé */
             padding: 20px;
             text-align: center;
             border-radius: 4px;
-            display: none;
+            display: none; /* Caché par défaut */
             z-index: 9999;
-            clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
-            text-shadow: 0 0 5px #00ffff, 0 0 10px #ff00ff;
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%); /* Pour les animations */
+            text-shadow: 0 0 5px #00ffff, 0 0 10px #ff00ff; /* Ombre de texte néon */
         }
 
+        /* Animation d'apparition "glitch" */
         @keyframes glitch-in {
             0% {
                 clip-path: polygon(0 20%, 100% 20%, 100% 22%, 0 22%);
@@ -54,11 +56,13 @@
             }
         }
         
+        /* Animation de disparition */
         @keyframes fade-out {
             from { opacity: 1; transform: translateX(-50%) scale(1); }
             to { opacity: 0; transform: translateX(-50%) scale(0.9); }
         }
 
+        /* Classes pour contrôler les animations */
         .visible {
             display: block !important;
             animation: glitch-in 0.5s forwards;
@@ -68,16 +72,18 @@
             animation: fade-out 0.5s forwards;
         }
 
+        /* Style du titre de l'annonce */
         #annonce-container h1 {
             margin: 0 0 10px 0;
             padding: 0 0 10px 0;
             font-size: 1.5em;
-            color: #ff00ff;
+            color: #ff00ff; /* Magenta néon */
             text-transform: uppercase;
             letter-spacing: 4px;
             border-bottom: 1px solid rgba(0, 255, 255, 0.5);
         }
 
+        /* Style du texte du message */
         #annonce-container p {
             margin: 0;
             font-size: 1.2em;
@@ -88,61 +94,76 @@
 <body>
 
     <div id="annonce-container">
-        <h1>-- Alerte Système --</h1>
+        <h1>-- Annonce Server --</h1>
         <p id="annonce-texte"></p>
     </div>
 
     <script>
+        // Attend que le contenu de la page soit chargé
         document.addEventListener('DOMContentLoaded', function () {
             const annonceContainer = document.getElementById('annonce-container');
             const annonceTexte = document.getElementById('annonce-texte');
-            let annonceTimeout;
+            let annonceTimeout; // Variable pour stocker le timer de disparition
 
+            // Crée un objet pour la synthèse vocale
             const synth = window.speechSynthesis;
             let voixRobotique;
 
+            // Fonction pour charger et sélectionner une voix
             function chargerVoix() {
                 const voix = synth.getVoices();
+                // Tente de trouver des voix spécifiques (souvent plus robotiques/claires)
                 voixRobotique = voix.find(v => v.name === 'Google UK English Male') || 
                                 voix.find(v => v.name === 'Microsoft David - English (United States)') ||
-                                voix.find(v => v.lang.startsWith('fr'));
+                                voix.find(v => v.lang.startsWith('fr')); // Prend une voix française si disponible
             }
 
+            // Les voix sont chargées de manière asynchrone, il faut donc écouter cet événement
             synth.onvoiceschanged = chargerVoix;
-            chargerVoix();
+            chargerVoix(); // Appelle une première fois au cas où elles seraient déjà prêtes
 
+            // Écoute les messages envoyés depuis client.lua (SendNUIMessage)
             window.addEventListener('message', function (event) {
                 const data = event.data;
 
+                // Vérifie si l'action est bien 'afficher'
                 if (data.action === 'afficher') {
+                    // Annule le timer précédent s'il existe (pour éviter une disparition prématurée)
                     clearTimeout(annonceTimeout);
 
+                    // Met à jour le texte de l'annonce
                     annonceTexte.textContent = data.texte;
 
+                    // Affiche le conteneur avec l'animation d'apparition
                     annonceContainer.classList.remove('hidden');
                     annonceContainer.classList.add('visible');
 
+                    // Prépare la lecture du texte
                     if (data.texte) {
                         const utterance = new SpeechSynthesisUtterance(data.texte);
                         
+                        // Si une voix robotique a été trouvée, on l'utilise
                         if (voixRobotique) {
                             utterance.voice = voixRobotique;
                         }
                         
-                        utterance.lang = 'fr-FR';
-                        utterance.pitch = 0.5;
-                        utterance.rate = 0.9;
-                        utterance.volume = 0.8;
+                        utterance.lang = 'fr-FR'; // Définit la langue
+                        utterance.pitch = 0.5; // Ton plus grave
+                        utterance.rate = 0.9; // Vitesse de parole légèrement réduite
+                        utterance.volume = 0.8; // Volume à 80%
 
+                        // Stoppe toute lecture en cours et lance la nouvelle
                         synth.cancel();
                         synth.speak(utterance);
                     }
 
+                    // Fait disparaître l'annonce après 10 secondes (10000 millisecondes)
                     annonceTimeout = setTimeout(() => {
                         annonceContainer.classList.add('hidden');
+                        // Après la fin de l'animation de disparition, on cache vraiment l'élément
                         setTimeout(() => {
                            annonceContainer.classList.remove('visible');
-                        }, 500);
+                        }, 500); // 500ms correspond à la durée de l'animation fade-out
                     }, 10000);
                 }
             });
@@ -150,3 +171,4 @@
     </script>
 </body>
 </html>
+
